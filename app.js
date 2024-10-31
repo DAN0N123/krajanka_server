@@ -12,20 +12,9 @@ var app = express();
 const productsRouter = require("./routes/productsRouter");
 const clientsRouter = require("./routes/clientsRouter");
 const ordersRouter = require("./routes/ordersRouter");
-const allowedOrigins = [
-  "http://localhost:5173",
-  process.env.PRODUCTION_ENVIRONMENT,
-];
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    console.log("Request Origin:", origin); // Add this line
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: true, // Allow all origins
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
