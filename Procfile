@@ -1,1 +1,1 @@
-api: cd backend && npm install && npm start
+api: npm install && npm start
