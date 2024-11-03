@@ -27,12 +27,12 @@ router.get(
 );
 router.post("/add", [
   body("address").trim().isLength({ min: 1 }),
-  body("date").trim().isLength({ min: 1 }),
-  body("time").trim().isLength({ min: 1 }),
   body("phone").trim().isLength({ min: 11 }),
+  body("paymentMethod").trim().isLength({ min: 1 }),
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error(errors);
       return res
         .status(500)
         .json({ ok: false, message: "Wprowadź poprawne dane" });
@@ -43,6 +43,8 @@ router.post("/add", [
     const address = req.body.address;
     const phone = req.body.phone;
     const products = req.body.products;
+    const note = req.body.note;
+    const paymentMethod = req.body.paymentMethod;
     const date = req.body.date;
     const time = req.body.time;
     const orderNumberCheck = await Order.findOne({
@@ -59,13 +61,14 @@ router.post("/add", [
       orderNumber,
       products,
       phone,
+      note,
+      paymentMethod,
       date,
       time,
     });
 
     try {
       await newOrder.save();
-      console.log("yo");
       await config.updateOne(
         { name: "APP_SETTINGS" },
         { $set: { orderNumber: orderNumber + 1 } }
@@ -153,7 +156,34 @@ router.get(
     }
   })
 );
-
+router.get(
+  "/getNextOrderID/:id",
+  asyncHandler(async (req, res) => {
+    const currentOrder = await Order.findById(req.params.id).exec();
+    const currentOrderNumber = currentOrder.orderNumber;
+    const nextOrder = await Order.findOne({
+      orderNumber: currentOrderNumber + 1,
+    }).exec();
+    if (nextOrder) {
+      return res.json({ ok: true, result: nextOrder._id });
+    }
+    return res.json({ ok: false, message: "Couldn't find next order" });
+  })
+);
+router.get(
+  "/getPreviousOrderID/:id",
+  asyncHandler(async (req, res) => {
+    const currentOrder = await Order.findById(req.params.id).exec();
+    const currentOrderNumber = currentOrder.orderNumber;
+    const nextOrder = await Order.findOne({
+      orderNumber: currentOrderNumber - 1,
+    }).exec();
+    if (nextOrder) {
+      return res.json({ ok: true, result: nextOrder._id });
+    }
+    return res.json({ ok: false, message: "Couldn't find previous order" });
+  })
+);
 router.get(
   "/get",
   asyncHandler(async (req, res) => {
