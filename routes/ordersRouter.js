@@ -157,31 +157,18 @@ router.get(
   })
 );
 router.get(
-  "/getNextOrderID/:id",
+  "/getAllIDs",
   asyncHandler(async (req, res) => {
-    const currentOrder = await Order.findById(req.params.id).exec();
-    const currentOrderNumber = currentOrder.orderNumber;
-    const nextOrder = await Order.findOne({
-      orderNumber: currentOrderNumber + 1,
-    }).exec();
-    if (nextOrder) {
-      return res.json({ ok: true, result: nextOrder._id });
+    try {
+      const allOrders = await Order.find()
+        .select("_id")
+        .sort("ascending")
+        .lean()
+        .exec();
+      return res.json({ ok: true, result: allOrders });
+    } catch (err) {
+      return res.json({ ok: false, message: "Failed to retrieve order ID's" });
     }
-    return res.json({ ok: false, message: "Couldn't find next order" });
-  })
-);
-router.get(
-  "/getPreviousOrderID/:id",
-  asyncHandler(async (req, res) => {
-    const currentOrder = await Order.findById(req.params.id).exec();
-    const currentOrderNumber = currentOrder.orderNumber;
-    const nextOrder = await Order.findOne({
-      orderNumber: currentOrderNumber - 1,
-    }).exec();
-    if (nextOrder) {
-      return res.json({ ok: true, result: nextOrder._id });
-    }
-    return res.json({ ok: false, message: "Couldn't find previous order" });
   })
 );
 router.get(
