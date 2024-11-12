@@ -1,19 +1,19 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const connection = require('../database');
+const connection = require("../database");
 const { Client } = connection.models;
-const asyncHandler = require('express-async-handler');
-const { body, validationResult, check } = require('express-validator');
+const asyncHandler = require("express-async-handler");
+const { body, validationResult, check } = require("express-validator");
 
 router.get(
-  '/get',
+  "/get",
   asyncHandler(async (req, res) => {
     const allClients = await Client.find().exec();
     return res.json({ ok: true, result: allClients });
   })
 );
 router.post(
-  '/delete/:id',
+  "/delete/:id",
   asyncHandler(async (req, res) => {
     try {
       const deletedClient = await Client.findByIdAndDelete(
@@ -22,28 +22,28 @@ router.post(
       if (!deletedClient) {
         return res.json({
           ok: false,
-          message: 'Problem przy usuwaniu klienta',
+          message: "Problem przy usuwaniu klienta",
         });
       }
     } catch (err) {
       return res.json({
         ok: false,
-        message: 'Problem przy usuwaniu klienta',
+        message: "Problem przy usuwaniu klienta",
         error: err,
       });
     }
-    return res.json({ ok: true, message: 'Klient pomyślnie usunięty' });
+    return res.json({ ok: true, message: "Klient pomyślnie usunięty" });
   })
 );
-router.post('/add', [
-  body('address').trim().isLength({ min: 1 }),
-  body('phone').trim().isLength({ min: 11 }),
+router.post("/add", [
+  body("address").trim().isLength({ min: 1 }),
+  body("phone").trim().isLength({ min: 11 }),
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty) {
       return res.json({
         ok: false,
-        message: 'Incorrect data received',
+        message: "Incorrect data received",
         errors: errors,
       });
     }
@@ -53,12 +53,12 @@ router.post('/add', [
     try {
       const checkDuplicate = await Client.findOne({ address: address }).exec();
       if (checkDuplicate) {
-        return res.json({ ok: false, message: 'Ten adres już istnieje' });
+        return res.json({ ok: false, message: "Ten adres już istnieje" });
       }
     } catch (err) {
       console.log(err);
     }
-    console.log('yo2');
+    console.log("yo2");
     const newClient = new Client({
       address,
       phone,
@@ -68,13 +68,13 @@ router.post('/add', [
       await newClient.save();
       return res.json({
         ok: true,
-        message: 'Nowy klient zapisany',
+        message: "Nowy klient zapisany",
         result: newClient,
       });
     } catch (err) {
       res.status(500).json({
         ok: false,
-        message: 'Wystąpił problem zapisując nowego klienta, spróbuj ponownie',
+        message: "Wystąpił problem zapisując nowego klienta, spróbuj ponownie",
       });
     }
   }),

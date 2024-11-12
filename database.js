@@ -19,6 +19,24 @@ const clientSchema = new mongoose.Schema({
   phone: String,
 });
 
+const routeSchema = new mongoose.Schema({
+  destination: String,
+  driver: String,
+  date: String,
+  quantityList: [
+    {
+      productName: String,
+      quantities: [
+        {
+          value: Number,
+          packed: Boolean,
+        },
+      ],
+    },
+  ],
+  orders: [{ type: Schema.ObjectId, ref: "Order" }],
+});
+
 const orderSchema = new mongoose.Schema({
   orderNumber: Number,
   address: String,
@@ -36,5 +54,6 @@ orderSchema.set("toObject", { virtuals: true });
 const Product = connection.model("Product", productSchema);
 const Client = connection.model("Client", clientSchema);
 const Order = connection.model("Order", orderSchema);
+const Route = connection.model("Route", routeSchema);
 
 module.exports = connection;

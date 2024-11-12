@@ -58,8 +58,6 @@ router.post("/login", [
       });
     }
 
-    // Compare the provided password with the stored hash using bcrypt.compare
-    console.log(req.body.password);
     const isMatch = await bcrypt.compare(
       req.body.password,
       appSettings.passwordHash
