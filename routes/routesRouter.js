@@ -48,7 +48,7 @@ router.post(
   })
 );
 
-router.get(
+router.post(
   "/delete/:id",
   asyncHandler(async (req, res) => {
     const id = req.params.id;
@@ -66,6 +66,30 @@ router.get(
     const id = req.params.id;
     const route = await Route.findById(id).populate("orders").exec();
     return res.json({ ok: true, result: route });
+  })
+);
+
+router.post(
+  "/update/:id",
+  asyncHandler(async (req, res) => {
+    const id = req.params.id;
+    const route = await Route.findById(id).exec();
+    const date = route.date;
+    const orderObjects = await Order.find({ date: date })
+      .select("_id")
+      .lean()
+      .exec();
+    let newOrders = [];
+    for (const order of orderObjects) {
+      newOrders.push(order._id);
+    }
+    console.log(newOrders.length);
+    try {
+      route.orders = newOrders;
+      await route.save();
+    } catch (err) {
+      console.log(err);
+    }
   })
 );
 
