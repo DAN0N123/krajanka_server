@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema({
   name: String,
   price: Number,
   packagingMethod: String,
-  note: String,
+  note: Object,
   image: { type: String, default: null },
   seasonal: Boolean,
 });
