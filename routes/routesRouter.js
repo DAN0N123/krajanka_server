@@ -41,6 +41,7 @@ router.post(
       { quantityList: newQuantityList },
       { new: true }
     ).exec();
+    route.save();
     if (!route) {
       res.json({ ok: false, message: "Wystąpił problem przy usuwaniu trasy" });
     }
