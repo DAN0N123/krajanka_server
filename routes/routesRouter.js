@@ -83,7 +83,7 @@ router.post(
     for (const order of orderObjects) {
       newOrders.push(order._id);
     }
-    console.log(newOrders.length);
+
     try {
       route.orders = newOrders;
       await route.save();

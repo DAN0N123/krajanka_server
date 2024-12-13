@@ -28,6 +28,7 @@ const routeSchema = new mongoose.Schema({
       productName: String,
       quantities: [
         {
+          orderID: String,
           value: Number,
           packed: Boolean,
         },
