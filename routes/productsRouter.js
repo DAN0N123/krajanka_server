@@ -25,6 +25,7 @@ router.get(
 router.get(
   "/getProductTotals",
   asyncHandler(async (req, res) => {
+    res.set("Cache-Control", "no-store");
     const allOrders = await Order.find().exec();
     const allCurrentOrders = allOrders.filter((order) => {
       // Extract the day, month, and year from the order's date string
