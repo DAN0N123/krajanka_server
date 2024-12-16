@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../database");
-const { Product } = connection.models;
+const { Product, Order } = connection.models;
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 
@@ -19,6 +19,47 @@ router.get(
     const id = req.params.id;
     const product = await Product.findOne({ _id: id }).exec();
     return res.json({ ok: true, result: product });
+  })
+);
+
+router.get(
+  "/getProductTotals",
+  asyncHandler(async (req, res) => {
+    const allOrders = await Order.find().exec();
+    const allCurrentOrders = allOrders.filter((order) => {
+      // Extract the day, month, and year from the order's date string
+      const [day, month, year] = order.date.split("-").map(Number);
+
+      // Convert the extracted values into a Date object
+      const orderDueDate = new Date(year, month - 1, day);
+
+      // Get today's date and zero out the time components for date-only comparison
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Also zero out the orderDueDate time for a fair comparison
+      orderDueDate.setHours(0, 0, 0, 0);
+
+      // Return true if the order is due strictly after today
+      return orderDueDate > today;
+    });
+
+    const productTotals = {};
+
+    allCurrentOrders.forEach((order) => {
+      order.products.forEach((product) => {
+        const productName = product.name;
+        // Convert the product quantity from string to number
+        const quantity = Number(product.quantity);
+
+        if (!productTotals[productName]) {
+          productTotals[productName] = 0;
+        }
+        productTotals[productName] += quantity;
+      });
+    });
+    console.log(productTotals);
+    return res.json({ ok: true, result: productTotals });
   })
 );
 
@@ -91,6 +132,7 @@ router.post("/add", [
       packagingMethod: req.body.packaging,
       seasonal: req.body.seasonal,
       image: req.body.image,
+      note: { stock: "", toOrder: "" },
     });
 
     try {
