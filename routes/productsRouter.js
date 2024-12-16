@@ -25,42 +25,46 @@ router.get(
 router.get(
   "/getProductTotals",
   asyncHandler(async (req, res) => {
-    res.set("Cache-Control", "no-store");
-    const allOrders = await Order.find().exec();
-    const allCurrentOrders = allOrders.filter((order) => {
-      // Extract the day, month, and year from the order's date string
-      const [day, month, year] = order.date.split("-").map(Number);
+    try {
+      const allOrders = await Order.find().exec();
+      const allCurrentOrders = allOrders.filter((order) => {
+        // Extract the day, month, and year from the order's date string
+        const [day, month, year] = order.date.split("-").map(Number);
 
-      // Convert the extracted values into a Date object
-      const orderDueDate = new Date(year, month - 1, day);
+        // Convert the extracted values into a Date object
+        const orderDueDate = new Date(year, month - 1, day);
 
-      // Get today's date and zero out the time components for date-only comparison
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+        // Get today's date and zero out the time components for date-only comparison
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-      // Also zero out the orderDueDate time for a fair comparison
-      orderDueDate.setHours(0, 0, 0, 0);
+        // Also zero out the orderDueDate time for a fair comparison
+        orderDueDate.setHours(0, 0, 0, 0);
 
-      // Return true if the order is due strictly after today
-      return orderDueDate > today;
-    });
-
-    const productTotals = {};
-
-    allCurrentOrders.forEach((order) => {
-      order.products.forEach((product) => {
-        const productName = product.name;
-        // Convert the product quantity from string to number
-        const quantity = Number(product.quantity);
-
-        if (!productTotals[productName]) {
-          productTotals[productName] = 0;
-        }
-        productTotals[productName] += quantity;
+        // Return true if the order is due strictly after today
+        return orderDueDate > today;
       });
-    });
-    console.log(productTotals);
-    return res.json({ ok: true, result: productTotals });
+
+      const productTotals = {};
+
+      allCurrentOrders.forEach((order) => {
+        order.products.forEach((product) => {
+          const productName = product.name;
+          // Convert the product quantity from string to number
+          const quantity = Number(product.quantity);
+
+          if (!productTotals[productName]) {
+            productTotals[productName] = 0;
+          }
+          productTotals[productName] += quantity;
+        });
+      });
+      console.log(productTotals);
+      return res.json({ ok: true, result: productTotals });
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
   })
 );
 
