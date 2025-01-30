@@ -12,6 +12,26 @@ router.get(
     return res.json({ ok: true, result: allClients });
   })
 );
+
+router.post(
+  "/edit/:id",
+  asyncHandler(async (req, res) => {
+    try {
+      const updatedClient = await Client.findByIdAndUpdate(
+        req.params.id,
+        req.body
+      ).exec();
+    } catch (err) {
+      return res.json({
+        ok: false,
+        message: "Problem przy edytowaniu klienta",
+        error: err,
+      });
+    }
+    return res.json({ ok: true, message: "Pomyślnie edytowano klienta" });
+  })
+);
+
 router.post(
   "/delete/:id",
   asyncHandler(async (req, res) => {
