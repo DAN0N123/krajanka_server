@@ -91,6 +91,7 @@ router.post(
 
 router.put("/edit/:id", [
   body("price").trim().isLength({ min: 1 }),
+  body("name").trim().isLength({ min: 1 }),
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -100,10 +101,12 @@ router.put("/edit/:id", [
         message: "Wprowadź poprawne dane",
       });
     }
+    console.log(req.body);
     const id = req.params.id;
     try {
       const editedProduct = await Product.findByIdAndUpdate(id, {
         price: req.body.price,
+        name: req.body.name,
       }).exec();
       if (!editedProduct) {
         return res.json({
