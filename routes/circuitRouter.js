@@ -4,87 +4,92 @@ const connection = require("../database");
 const { Route } = connection.models;
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
+const { geocodeAddress } = require("../misc/geocodeAddress");
+const axios = require("axios");
 
-async function createPlanAndAddStops() {
-  // Plan details
-  const planData = {
-    title: "Test",
-    starts: {
-      day: 31,
-      month: 5,
-      year: 2023,
-    },
-  };
+async function getRouteId(name) {
+  try {
+    const response = await axios.get(
+      "https://api.getcircuit.com/public/v0.2b/plans",
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.CIRCUIT_API_KEY}`,
+        },
+      }
+    );
 
-  // First create a plan for a specific day. Here we create one named "Test" for
-  // the day 2023-05-31.
-  const planResponse = await axios.post(
-    "https://api.getcircuit.com/public/v0.2b/plans",
-    planData,
-    {
-      auth: { username: apiKey },
-    }
-  );
+    const routeId = response.data.plans
+      .find((plan) => plan.title === name)
+      .id.split("/")[1];
 
-  // The response will return an object similar to the following:
-  // {
-  //   "id": "plans/FQ95Ex714KYeojkeIm77",
-  //   "title": "Test",
-  //   "starts": {
-  //     "day": 31,
-  //     "month": 5,
-  //     "year": 2023
-  //   },
-  //   ...
-  // }
-  const plan = planResponse.data;
-  console.log(plan);
-
-  // Stop details. Remember to provide valid addresses.
-  const stopData = [
-    {
-      address: {
-        addressLineOne: "Some valid address",
-      },
-    },
-    {
-      address: {
-        addressLineOne: "Some other valid address",
-      },
-    },
-  ];
-
-  // Now, with the returned ID, we can add stops to this plan
-  const stopsImportResponse = await axios.post(
-    `https://api.getcircuit.com/public/v0.2b/${plan.id}/stops:import`,
-    stopData,
-    {
-      auth: { username: apiKey },
-    }
-  );
-
-  // With proper addresses the above request will return a response similar to the
-  // following:
-  // {
-  //   "success": [
-  //     "plans/FQ95Ex714KYeojkeIm77/stops/vgsTiQi85ueWRs1JnXx7",
-  //     "plans/FQ95Ex714KYeojkeIm77/stops/q0HUM8SwBPt8n3pYZOeO"
-  //   ],
-  //   "failed": []
-  // }
-  const stops = stopsImportResponse.data;
-  console.log(stops);
-
-  // If you wish to retrieve more information about one of the create stops you can
-  // issue a GET request for it:
-  const stopGetResponse = await axios.get(
-    `https://api.getcircuit.com/public/v0.2b/${stops.success[0]}`,
-    {
-      auth: { username: apiKey },
-    }
-  );
-
-  // The response will return information about the stop.
-  const stopInfo = stopGetResponse.data;
-  console.log(stopInfo);
+    return routeId;
+  } catch (error) {
+    console.error("Error fetching routes:", error);
+  }
 }
+
+async function addStopsToRoute(routeName, stops) {
+  const routeId = await getRouteId(routeName);
+
+  const response = await axios.post(
+    `https://api.getcircuit.com/public/v0.2b/plans/${routeId}/stops:import`,
+    stops,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.CIRCUIT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+}
+
+router.post("/routes/:routeName/addStops", async (req, res) => {
+  const routeName = req.params.routeName;
+  const addresses = req.body.addresses;
+
+  if (!Array.isArray(addresses) || addresses.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message:
+        'Please provide a non-empty "addresses" array in the request body',
+    });
+  }
+
+  try {
+    const geocodePromises = addresses.map((addr) =>
+      geocodeAddress(addr.addressName)
+    );
+    const geocodedResults = await Promise.all(geocodePromises);
+
+    const stops = addresses.map(
+      ({ addressName, phone, notes, paymentMethod }, index) => ({
+        address: {
+          addressName,
+          latitude: geocodedResults[index].latitude,
+          longitude: geocodedResults[index].longitude,
+        },
+        recipient: {
+          phone,
+        },
+        notes: `${paymentMethod} ${notes || ""}`,
+      })
+    );
+    const circuitApiResponse = await addStopsToRoute(routeName, stops);
+
+    return res.status(200).json({
+      success: true,
+      routeName,
+      circuitApiResponse,
+    });
+  } catch (error) {
+    console.error("Error adding stops to Circuit:", error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+module.exports = router;

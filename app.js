@@ -22,6 +22,7 @@ const isAuthenticated = (req, res, next) => {
 const productsRouter = require("./routes/productsRouter");
 const clientsRouter = require("./routes/clientsRouter");
 const ordersRouter = require("./routes/ordersRouter");
+const circuitRouter = require("./routes/circuitRouter");
 const authRouter = require("./routes/authRouter");
 const routesRouter = require("./routes/routesRouter");
 
@@ -48,6 +49,7 @@ app.use(isAuthenticated);
 
 app.use("/products", productsRouter);
 app.use("/clients", clientsRouter);
+app.use("/circuit", circuitRouter);
 app.use("/orders", ordersRouter);
 app.use("/routes", routesRouter);
 
