@@ -79,14 +79,15 @@ router.post("/routes/:routeName/addStops", async (req, res) => {
     const circuitApiResponse = await addStopsToRoute(routeName, stops);
 
     return res.status(200).json({
-      success: true,
+      ok: true,
+      result: "Pomyślnie połączono z Circuit",
       routeName,
       circuitApiResponse,
     });
   } catch (error) {
     console.error("Error adding stops to Circuit:", error.message);
     return res.status(500).json({
-      success: false,
+      ok: false,
       error: error.message,
     });
   }
