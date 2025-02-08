@@ -64,7 +64,10 @@ router.post("/routes/:routeName/addStops", async (req, res) => {
     const geocodedResults = await Promise.all(geocodePromises);
 
     const stops = addresses.map(
-      ({ addressName, phone, notes, paymentMethod }, index) => ({
+      (
+        { addressName, phone, notes, paymentMethod, products, total },
+        index
+      ) => ({
         address: {
           addressName,
           latitude: geocodedResults[index].latitude,
@@ -73,7 +76,9 @@ router.post("/routes/:routeName/addStops", async (req, res) => {
         recipient: {
           phone,
         },
-        notes: `${paymentMethod} ${notes || ""}`,
+        notes: `Sposób płatności: ${paymentMethod} \n \nProdukty: ${products} \nSuma: ${total} PLN \n${
+          notes ? `Notatki: ${notes}` : ""
+        }`,
       })
     );
     const circuitApiResponse = await addStopsToRoute(routeName, stops);
