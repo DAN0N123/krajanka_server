@@ -70,6 +70,52 @@ router.get(
   })
 );
 
+router.get("/getDrivers", async (req, res) => {
+  try {
+    const db = connection.db;
+    const collection = db.collection("config");
+
+    const configDoc = await collection.findOne({ name: "APP_SETTINGS" });
+    if (!configDoc) {
+      return res.status(404).json({ message: "Config not found" });
+    }
+
+    res.json({ ok: true, result: configDoc.drivers });
+  } catch (error) {
+    console.error("Error fetching drivers:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/updateDrivers", async (req, res) => {
+  try {
+    const { drivers } = req.body;
+    console.log(drivers);
+    if (!Array.isArray(drivers)) {
+      return res.status(400).json({ message: "Invalid drivers array" });
+    }
+
+    const db = connection.db;
+    const collection = db.collection("config");
+
+    const result = await collection.updateOne(
+      { name: "APP_SETTINGS" },
+      { $set: { drivers: drivers } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res
+        .status(404)
+        .json({ message: "Config not found or not updated" });
+    }
+
+    res.status(200).json({ message: "Drivers updated successfully" });
+  } catch (error) {
+    console.error("Error updating drivers:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 router.post(
   "/update/:id",
   asyncHandler(async (req, res) => {
