@@ -12,6 +12,7 @@ const productSchema = new mongoose.Schema({
   note: Object,
   image: { type: String, default: null },
   seasonal: Boolean,
+  favorite: Boolean,
 });
 
 const clientSchema = new mongoose.Schema({

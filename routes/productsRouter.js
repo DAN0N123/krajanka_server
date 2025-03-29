@@ -89,6 +89,45 @@ router.post(
   })
 );
 
+router.get(
+  "/getFavorite",
+  asyncHandler(async (req, res) => {
+    const products = await Product.find();
+    const favoriteProducts = products.filter((product) => product.favorite);
+    return res.json({ ok: true, result: favoriteProducts });
+  })
+);
+
+router.post(
+  "/updateFavorite/:id",
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { favorite } = req.body;
+
+    if (typeof favorite !== "boolean") {
+      return res
+        .status(400)
+        .json({ ok: false, message: "'favorite' must be a boolean." });
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      { favorite },
+      { new: true }
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ ok: false, message: "Product not found." });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message: "Favorite status updated.",
+      result: updatedProduct,
+    });
+  })
+);
+
 router.put("/edit/:id", [
   body("price").trim().isLength({ min: 1 }),
   body("name").trim().isLength({ min: 1 }),
